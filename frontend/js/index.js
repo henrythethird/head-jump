@@ -5,14 +5,8 @@ function startGame() {
 
     globalContext = new GlobalContext();
 
-    renderComponents.push(new Player(100, 100, "black", 0, 0));
+    renderComponents.push(new Player());
     renderComponents.push(new Component(myGameArea.canvas.width, 100, "black", 0, myGameArea.canvas.height - 100));
-
-    renderComponents.push(new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30))
-    renderComponents.push(new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
-        const width = (myGameArea.canvas.width - 210) * globalContext.health / 100.0;
-        comp.width = width > 0 ? width : 0;
-    }))
 }
 
 function updateGameArea() {
@@ -49,17 +43,34 @@ class Component {
 }
 
 class Player extends Component {
+    constructor() {
+        super(100, 100, "black", 0, 0);
+
+        this.health = 100;
+
+        var that = this;
+
+        this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
+        this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
+            const width = (myGameArea.canvas.width - 210) * that.health / 100.0;
+            comp.width = width > 0 ? width : 0;
+        })
+    }
+
     update() {
-        super.update()
+        super.update();
 
         // Right-arrow
-        if (globalContext.isPressed(39)) { this.x += 10 }
+        if (globalContext.isPressed(39)) { this.x += 10; }
         // Down-arrow
-        if (globalContext.isPressed(38)) { this.y -= 10 }
+        if (globalContext.isPressed(38)) { this.y -= 10; }
         // Up-arrow
-        if (globalContext.isPressed(40)) { this.y += 10 }
+        if (globalContext.isPressed(40)) { this.y += 10; }
         // Left-arrow
-        if (globalContext.isPressed(37)) { this.x -= 10 }
+        if (globalContext.isPressed(37)) { this.x -= 10; }
+
+        this.healthOuter.update();
+        this.healthInner.update();
     }
 }
 
@@ -84,8 +95,6 @@ class GlobalContext {
         window.addEventListener("keyup", function(e) { that.keyup(e) });
         window.addEventListener("keydown", function(e) { that.keydown(e) });
         this.map = {};
-
-        this.health = 100;
     }
     
     keyup(e) {
