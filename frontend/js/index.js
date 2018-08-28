@@ -6,7 +6,7 @@ function startGame() {
     globalContext = new GlobalContext();
 
     renderComponents.push(new Player(100, 100, "black", 0, 0));
-    renderComponents.push(new Component(myGameArea.canvas.width, 100, "black", 0, myGameArea.canvas.height - 100));
+    renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
 
     renderComponents.push(new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30))
     renderComponents.push(new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
@@ -60,6 +60,18 @@ class Player extends Component {
         if (globalContext.isPressed(40)) { this.y += 10 }
         // Left-arrow
         if (globalContext.isPressed(37)) { this.x -= 10 }
+    }
+}
+
+class Fish extends Component {
+    constructor(x) {
+        super(50, 50, "blue", x, myGameArea.canvas.height)
+
+        this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
+    }
+    update() {
+        super.update()
+        this.y -= 1
     }
 }
 
