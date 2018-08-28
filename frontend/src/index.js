@@ -163,7 +163,7 @@ class PointParticle {
   }
 
   update() {
-    if (this.counter > 100) {
+    if (this.counter > 50) {
       return;
     }
 
@@ -172,7 +172,7 @@ class PointParticle {
     this.y -= 5;
     this.counter++;
 
-    ctx.fillStyle = "rgba(255, 255, 255, " + (1 - this.counter / 100.0) + ")";
+    ctx.fillStyle = "rgba(255, 255, 255, " + (1 - this.counter / 50.0) + ")";
     ctx.textAlign = "center";
     ctx.font = "bold 30px Arial";
     ctx.fillText("+42", this.x, this.y);
@@ -181,11 +181,14 @@ class PointParticle {
 
 class Player extends Component {
   constructor() {
-    super(165, 210, "transparent", 300, 100, 10);
+    super(200, 150, "transparent", 300, 100, 10);
 
     this.weight = 50;
     this.progress = 0;
     this.speed = { x: 0, y: 0 };
+    this.right = false;
+    this.vertical = 0;
+
     this.whaleImg = new Image;
     this.whaleImg.src = '/images/Whale.svg';
   }
@@ -201,22 +204,28 @@ class Player extends Component {
     if (globalContext.isPressed(39)) { 
       anyPressed = true;
       this.speed.x += .3;
+      this.right = true;
     }
     // Left-arrow
     if (globalContext.isPressed(37)) { 
       anyPressed = true;
       this.speed.x -= .3; 
+      this.right = false;
     }
+
+    this.vertical = 0;
 
     // Down-arrow
     if (globalContext.isPressed(38)) { 
       anyPressed = true;
       this.speed.y -= .3; 
+      this.vertical = -1;
     }
     // Up-arrow
     if (globalContext.isPressed(40)) { 
       anyPressed = true;
       this.speed.y += .3; 
+      this.vertical = 1;
     }
 
     if (!anyPressed) {
@@ -250,6 +259,26 @@ class Player extends Component {
 
     this.x += this.speed.x;
     this.y += this.speed.y;
+
+    var infix = ''
+
+    switch (this.vertical) {
+      case -1:
+        infix = '_up';
+        this.width = 236;
+        this.height = 126;
+        break;
+      case 0:
+        this.width = 196;
+        this.height = 151;
+        break;
+      case 1:
+        infix = '_down';
+        this.width = 166;
+        this.height = 210;
+    }
+    
+    this.whaleImg.src = '/images/Whale' + infix + (this.right ? '_right' : '') + '.svg';
 
     ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
 
