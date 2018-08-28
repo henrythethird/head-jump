@@ -217,8 +217,9 @@ class Cloud extends Component {
     this.speed = 6;
 
     if(size == 'small') {
-      this.width = 76;
-      this.height = 42;
+      this.cloudImg.src = '/images/cloud' + random + '-dark.svg'
+      this.width = 50;
+      this.height = 27;
       this.speed = 2;
       this.z = 5;
     }
