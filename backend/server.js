@@ -2,6 +2,7 @@
 
 const WebSocketServer = require('websocket').server
 const http = require('http')
+const progresses = {}
 
 const server = http.createServer(function(request, response) {
   console.log((new Date()) + ' Received request for ' + request.url)
@@ -34,7 +35,11 @@ wsServer.on('request', function(request) {
     }
 
     console.log('Received Message: ' + message.utf8Data)
-    connection.sendUTF(message.utf8Data)
+    request = JSON.parse(message.utf8Data)
+
+    progresses[request.userId] = request.progress
+
+    connection.sendUTF(JSON.stringify(progresses))
   })
 
   connection.on('close', function(reasonCode, description) {

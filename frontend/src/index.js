@@ -1,7 +1,9 @@
 const W3CWebSocket = require('websocket').w3cwebsocket;
 
 var renderComponents = []
+let webSocketClient
 var player = null;
+const userId = Math.floor((Math.random() * 10000) + 1)
 
 function startGame() {
   myGameArea.start();
@@ -59,14 +61,21 @@ class Player extends Component {
     this.weight = 50;
     this.progress = 0;
     this.whaleImg = new Image;
-    this.whaleImg.src = '/images/whale.svg';
+    this.whaleImg.src = '/images/Whale.svg';
 
     var that = this;
 
     this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
     this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
       const percentage = that.weight / 100.0;
-      comp.width = (myGameArea.canvas.width - 210) * percentage
+
+      comp.width = (myGameArea.canvas.width - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
+    })
+
+    this.progressOuter = new Component(30, myGameArea.canvas.height - 200, "black", myGameArea.canvas.width - 50, 100)
+    this.progressInner = new Component(20, myGameArea.canvas.height - 210, "green", myGameArea.canvas.width - 45, 105, function(ctx, comp) {
+      const percentage = that.progress / 100.0;
+      comp.height = (myGameArea.canvas.height - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
     })
   }
 
@@ -88,6 +97,8 @@ class Player extends Component {
 
     this.healthOuter.update();
     this.healthInner.update();
+    this.progressOuter.update();
+    this.progressInner.update();
 
     this.updateProgress();
   }
@@ -100,7 +111,9 @@ class Player extends Component {
 
   collide() {
     const c1 = this;
-    const res = renderComponents.filter((other) => this.intersectRect(c1, other))
+    const res = renderComponents
+      .filter((obj) => obj instanceof Fish)
+      .filter((other) => this.intersectRect(c1, other))
     
     res.forEach((fish) => {
       fish.disabled = true;
@@ -128,6 +141,7 @@ class Fish extends Component {
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
     this.disabled = false;
   }
+
   update() {
     if (this.disabled) {
       return;
@@ -155,13 +169,13 @@ class Cloud extends Component {
     if(size == 'small') {
       this.width = 841
       this.height = 595
-      this.speed = 1
+      this.speed = 0.7
     }
 
   }
   update() {
     var ctx = myGameArea.context;
-    this.y -= this.speed  
+    this.y -= this.speed
     ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
@@ -202,35 +216,63 @@ class GlobalContext {
   }
 }
 
-function startSocket() {
-  const client = new W3CWebSocket('ws://localhost:8080/', 'echo-protocol')
+class Request {
+  constructor(userId) {
+    this.userId = userId
+  }
 
-  client.onerror = function() {
+  setProgress(progress) {
+    this.progress = progress
+  }
+
+  toJson() {
+    return JSON.stringify(this)
+  }
+}
+
+function startSocket() {
+  webSocketClient = new W3CWebSocket('ws://localhost:8080/', 'echo-protocol')
+
+  webSocketClient.onerror = function() {
     console.log('Connection Error')
   }
 
-  client.onopen = function() {
+  webSocketClient.onopen = function() {
     console.log('WebSocket Client Connected')
 
-    function sendNumber() {
-      if (client.readyState === client.OPEN) {
-        const number = Math.round(Math.random() * 0xFFFFFF)
-        client.send(number.toString())
-        setTimeout(sendNumber, 1000)
-      }
-    }
-    sendNumber()
+    sendProgress()
   }
 
-  client.onclose = function() {
+  webSocketClient.onclose = function() {
     console.log('echo-protocol Client Closed')
   }
 
-  client.onmessage = function(e) {
-    if (typeof e.data === 'string') {
-      console.log("Received: '" + e.data + "'")
+  webSocketClient.onmessage = function(e) {
+    if (typeof e.data !== 'string') {
+      console.log('Received data is no string')
+      return
     }
+
+    console.log("Received: '" + e.data + "'")
   }
+}
+
+let request = new Request(userId)
+
+function sendProgress() {
+  request.setProgress(player.progress)
+
+  sendMessage(request.toJson());
+  setTimeout(sendProgress, 1000);
+}
+
+function sendMessage(message) {
+  if (webSocketClient.readyState !== webSocketClient.OPEN) {
+    console.log('Can not send message as client has not connected yet')
+    return
+  }
+
+  webSocketClient.send(message)
 }
 
 startGame()
