@@ -15,8 +15,20 @@ function startGame() {
 function updateGameArea() {
   myGameArea.clear();
 
-  if (Math.random() > 0.93) {
-    renderComponents.push(new Cloud());
+  if (globalContext.state == 'finished') {
+    globalContext.state = 'initial';
+  }
+
+  if (globalContext.state != 'ending') {
+    if (Math.random() > 0.93) {
+      renderComponents.push(new Cloud());
+    }
+  }
+
+  if (globalContext.state == 'running' || globalContext.state == 'ending') {
+    if (globalContext.isPressed(27)) {
+      globalContext.state = 'initial';
+    }
   }
 
   if (globalContext.state == 'running') {
@@ -24,17 +36,27 @@ function updateGameArea() {
       renderComponents.push(new Fish());
     }
 
-    if (globalContext.isPressed(27)) {
-      globalContext.state = 'initial';
-      renderComponents = [];
-      player = null;
+    globalContext.mainMusic.playbackRate = 1 + (player.weight / 100);
+
+    if (player.progress >= 100) {
+      globalContext.state = 'end';
     }
   }
 
+  if (globalContext.state == 'end') {
+    renderComponents.push(new Boat())
+    globalContext.state = 'ending';
+  }
+
   if (globalContext.state == 'initial') {
+    globalContext.points = 0;
+    renderComponents = [];
+    player = null;
+
     globalContext.state = 'title';
 
     renderComponents.push(new Title());
+    globalContext.loopMainMusic();
   }
 
   if (globalContext.state == 'title') {
@@ -44,12 +66,12 @@ function updateGameArea() {
   }
 
   if (globalContext.state == 'starting') {
-    player = new Player();
-
     renderComponents = [];
-    renderComponents.push(player);
+    renderComponents.push(player = new Player());
+    renderComponents.push(new Points());
 
     globalContext.state = 'running';
+    globalContext.loopGameMusic();
   }
   
   //console.log(renderComponents)
@@ -86,17 +108,86 @@ class Component {
   }
 }
 
+class Boat extends Component {
+  constructor() {
+    super(800, 400, "transparent", 0, 600, 70)
+
+    this.boatImg = new Image();
+    this.boatImg.src = '/images/Boat.svg';
+  }
+
+  update() {
+    var ctx = myGameArea.context;
+    if (this.y > 200) {
+      this.y -= 10;
+    } else {
+      globalContext.state = 'finished';
+    }
+    ctx.drawImage(this.boatImg, this.x, this.y, this.width, this.height)
+  }
+}
+
+class Points {
+  constructor() {
+    this.x = 600;
+    this.y = 85;
+    this.z = 101;
+
+    this.logo42 = new Image;
+    this.logo42.src = '/images/42logo.svg';
+  }
+
+  update() {
+    var ctx = myGameArea.context;
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "left";
+    ctx.font = "bold 25px Arial";
+    ctx.fillText(String(globalContext.points).padStart(10, '0'), this.x, this.y);
+    ctx.font = "bold 16px Arial";
+    ctx.fillText("points", this.x, this.y - 30);
+
+    ctx.drawImage(this.logo42, 20, 20, 100, 100)
+  }
+}
+
+class PointParticle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.z = 99;
+
+    this.counter = 0;
+
+    globalContext.points += 42;
+  }
+
+  update() {
+    if (this.counter > 100) {
+      return;
+    }
+
+    var ctx = myGameArea.context;
+
+    this.y -= 5;
+    this.counter++;
+
+    ctx.fillStyle = "rgba(255, 255, 255, " + (1 - this.counter / 100.0) + ")";
+    ctx.textAlign = "center";
+    ctx.font = "bold 30px Arial";
+    ctx.fillText("+42", this.x, this.y);
+  }
+}
+
 class Player extends Component {
   constructor() {
-    super(165, 210, "transparent", 350, 0, 10);
+    super(165, 210, "transparent", 300, 100, 10);
 
     this.weight = 50;
     this.progress = 0;
     this.speed = { x: 0, y: 0 };
     this.whaleImg = new Image;
     this.whaleImg.src = '/images/Whale.svg';
-
-    var that = this;
   }
 
   update() {
@@ -109,23 +200,23 @@ class Player extends Component {
     // Right-arrow
     if (globalContext.isPressed(39)) { 
       anyPressed = true;
-      this.speed.x += .2;
+      this.speed.x += .3;
     }
     // Left-arrow
     if (globalContext.isPressed(37)) { 
       anyPressed = true;
-      this.speed.x -= .2; 
+      this.speed.x -= .3; 
     }
 
     // Down-arrow
     if (globalContext.isPressed(38)) { 
       anyPressed = true;
-      this.speed.y -= .2; 
+      this.speed.y -= .3; 
     }
     // Up-arrow
     if (globalContext.isPressed(40)) { 
       anyPressed = true;
-      this.speed.y += .2; 
+      this.speed.y += .3; 
     }
 
     if (!anyPressed) {
@@ -166,7 +257,7 @@ class Player extends Component {
   }
 
   updateProgress() {
-    this.progress += this.weight / 5000.0;
+    this.progress += this.weight / 1000.0;
     if (this.progress > 100) {
       this.progress = 100;
     }
@@ -186,6 +277,8 @@ class Player extends Component {
 
       var snd = new Audio("/sound/crunch.mpeg");
       snd.play();
+      
+      renderComponents.push(new PointParticle(fish.x, fish.y));
     })
   }
 
@@ -203,7 +296,22 @@ class Player extends Component {
 
 class Title extends Component {
   constructor() {
-    super(100, 100, "black", 10, 10, 10);
+    super(100, 100, "transparent", 10, 10, 10);
+    this.titleImg = new Image;
+    this.titleImg.src = '/images/42.svg'
+
+    this.ftImg = new Image;
+    this.ftImg.src = '/images/Title.svg';
+
+    this.buttonImg = new Image;
+    this.buttonImg.src = '/images/Button.svg'
+  }
+
+  update() {
+    var ctx = myGameArea.context;
+    ctx.drawImage(this.titleImg, 350, 50, 100, 90)
+    ctx.drawImage(this.ftImg, 225, 216, 355, 96)
+    ctx.drawImage(this.buttonImg, 270, 465, 260, 60)
   }
 }
 
@@ -224,7 +332,7 @@ class Fish extends Component {
     }
 
     var ctx = myGameArea.context;
-    this.y -= this.velocity * (1 + player.progress / 10)
+    this.y -= this.velocity * (1 + player.progress / 50)
     ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
   }
 }
@@ -253,7 +361,7 @@ class Cloud extends Component {
   }
   update() {
     var ctx = myGameArea.context;
-    this.y -= this.speed * (1 + (player ? player.progress : 0) / 10)
+    this.y -= this.speed * (1 + (player ? player.progress : 0) / 50)
     ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
@@ -280,6 +388,29 @@ class GlobalContext {
     window.addEventListener("keydown", function(e) { that.keydown(e); });
     this.map = {};
     this.state = "initial";
+
+    this.points = 0;
+  }
+
+  loopMainMusic() {
+    if (this.mainMusic) {
+      this.mainMusic.pause();
+    }
+    this.mainMusic = new Audio("/sound/Nighttime-Escape.mp3");
+    this.mainMusic.volume = 0.3;
+    this.mainMusic.loop = true;
+    this.mainMusic.play();
+  }
+
+  loopGameMusic() {
+    if (this.mainMusic) {
+      this.mainMusic.pause();
+    }
+
+    this.mainMusic = new Audio("/sound/Into-Battle_v001.mp3");
+    this.mainMusic.volume = 0.3;
+    this.mainMusic.loop = true;
+    this.mainMusic.play();
   }
 
   keyup(e) {
