@@ -6,7 +6,6 @@ function startGame() {
     globalContext = new GlobalContext();
     renderComponents.push(new Player());
     renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
-    renderComponents.push(new Component(myGameArea.canvas.width, 100, "black", 0, myGameArea.canvas.height - 100));
 }
 
 function updateGameArea() {
@@ -61,17 +60,17 @@ class Player extends Component {
 
     update() {
         var ctx = myGameArea.context;
-
-        ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
-
+        
         // Right-arrow
         if (globalContext.isPressed(39)) { this.x += 10; }
+        // Left-arrow
+        if (globalContext.isPressed(37)) { this.x -= 10; }
+
         // Down-arrow
         if (globalContext.isPressed(38)) { this.y -= 10; }
         // Up-arrow
         if (globalContext.isPressed(40)) { this.y += 10; }
-        // Left-arrow
-        if (globalContext.isPressed(37)) { this.x -= 10; }
+        ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
 
         this.healthOuter.update();
         this.healthInner.update();
