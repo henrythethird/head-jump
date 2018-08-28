@@ -3,7 +3,8 @@ const W3CWebSocket = require('websocket').w3cwebsocket;
 var renderComponents = []
 let webSocketClient
 var player = null;
-const userId = Math.floor((Math.random() * 10000) + 1)
+const playerId = Math.floor((Math.random() * 10000) + 1)
+let progressOtherPlayers = {}
 
 function startGame() {
   myGameArea.start();
@@ -303,11 +304,12 @@ function startSocket() {
       return
     }
 
-    console.log("Received: '" + e.data + "'")
+    progressOtherPlayers = filterOwnProgress(JSON.parse(e.data))
+    console.log(JSON.stringify(progressOtherPlayers))
   }
 }
 
-let request = new Request(userId)
+let request = new Request(playerId)
 
 function sendProgress() {
   request.setProgress(player.progress)
@@ -323,6 +325,12 @@ function sendMessage(message) {
   }
 
   webSocketClient.send(message)
+}
+
+function filterOwnProgress(progress) {
+  delete(progress[playerId])
+
+  return progress
 }
 
 startGame()
