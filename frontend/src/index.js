@@ -102,7 +102,9 @@ class Player extends Component {
 
   collide() {
     const c1 = this;
-    const res = renderComponents.filter((other) => this.intersectRect(c1, other))
+    const res = renderComponents
+      .filter((obj) => obj instanceof Fish)
+      .filter((other) => this.intersectRect(c1, other))
     
     res.forEach((fish) => {
       fish.disabled = true;
@@ -130,6 +132,7 @@ class Fish extends Component {
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
     this.disabled = false;
   }
+
   update() {
     if (this.disabled) {
       return;
