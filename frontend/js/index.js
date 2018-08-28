@@ -4,8 +4,8 @@ function startGame() {
     myGameArea.start();
 
     globalContext = new GlobalContext();
-
     renderComponents.push(new Player());
+    renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
     renderComponents.push(new Component(myGameArea.canvas.width, 100, "black", 0, myGameArea.canvas.height - 100));
 }
 
@@ -75,6 +75,18 @@ class Player extends Component {
 
         this.healthOuter.update();
         this.healthInner.update();
+    }
+}
+
+class Fish extends Component {
+    constructor(x) {
+        super(50, 50, "blue", x, myGameArea.canvas.height)
+
+        this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
+    }
+    update() {
+        super.update()
+        this.y -= 1
     }
 }
 
