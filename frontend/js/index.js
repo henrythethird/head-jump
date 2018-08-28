@@ -80,13 +80,15 @@ class Player extends Component {
 
 class Fish extends Component {
     constructor(x) {
-        super(50, 50, "blue", x, myGameArea.canvas.height)
-
+        super(70, 36, "blue", x, myGameArea.canvas.height)
+        this.fishImg = new Image;
+        this.fishImg.src = '/images/Fish.svg';
         this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
     }
     update() {
-        super.update()
+        var ctx = myGameArea.context;
         this.y -= 1
+        ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
     }
 }
 
