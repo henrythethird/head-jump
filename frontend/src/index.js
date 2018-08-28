@@ -155,7 +155,7 @@ class Fish extends Component {
 
 class Cloud extends Component {
   constructor() {
-    super(1682, 1190, "blue", 0, myGameArea.canvas.height)
+    super(153, 84, "blue", 0, myGameArea.canvas.height)
     this.cloudImg = new Image
     var sizes = ['small', 'big']
     var size;
@@ -163,12 +163,12 @@ class Cloud extends Component {
     let random;
     random = Math.floor(Math.random() * 4) + 1
     this.cloudImg.src = '/images/cloud' + random + '.svg'
-    this.x = Math.floor(Math.random() * (100 - 0 + 1)) + 0
+    this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0
     this.speed = 4
 
     if(size == 'small') {
-      this.width = 841
-      this.height = 595
+      this.width = 76
+      this.height = 42
       this.speed = 0.7
     }
 
