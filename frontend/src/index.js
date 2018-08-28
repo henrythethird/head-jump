@@ -13,12 +13,12 @@ function startGame() {
 function updateGameArea() {
   myGameArea.clear();
 
-  if(Math.random() > 0.998) {
-    renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
+  if(Math.random() > 0.99) {
+    renderComponents.push(new Fish());
   }
   
-  if(Math.random() > 0.998) {
-    renderComponents.push(new Cloud(50, 50, "blue", 0, myGameArea.canvas.height));
+  if(Math.random() > 0.99) {
+    renderComponents.push(new Cloud());
   }
   //console.log(renderComponents)
   renderComponents.forEach((comp) => {
@@ -121,8 +121,8 @@ class Player extends Component {
 }
 
 class Fish extends Component {
-  constructor(x) {
-    super(36, 70, "blue", x, myGameArea.canvas.height)
+  constructor() {
+    super(36, 70, "blue", 0, myGameArea.canvas.height)
     this.fishImg = new Image;
     this.fishImg.src = '/images/Fish.svg';
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
@@ -140,16 +140,28 @@ class Fish extends Component {
 }
 
 class Cloud extends Component {
-  constructor(x) {
-    super(841, 595, "blue", x, myGameArea.canvas.height)
-    this.cloudImg = new Image;
-    this.cloudImg.src = '/images/cloud1.svg';
-    this.x = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
+  constructor() {
+    super(1682, 1190, "blue", 0, myGameArea.canvas.height)
+    this.cloudImg = new Image
+    var sizes = ['small', 'big']
+    var size;
+    size = sizes[Math.floor(Math.random()*sizes.length)];
+    let random;
+    random = Math.floor(Math.random() * 4) + 1
+    this.cloudImg.src = '/images/cloud' + random + '.svg'
+    this.x = Math.floor(Math.random() * (100 - 0 + 1)) + 0
+    this.speed = 4
+
+    if(size == 'small') {
+      this.width = 841
+      this.height = 595
+      this.speed = 1
+    }
 
   }
   update() {
     var ctx = myGameArea.context;
-    this.y -= 1
+    this.y -= this.speed  
     ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
