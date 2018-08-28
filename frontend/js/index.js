@@ -44,9 +44,11 @@ class Component {
 
 class Player extends Component {
     constructor() {
-        super(100, 100, "black", 0, 0);
+        super(165, 210, "yellow", 0, 0);
 
         this.health = 100;
+        this.whaleImg = new Image;
+        this.whaleImg.src = '/images/whale.svg';
 
         var that = this;
 
@@ -58,7 +60,9 @@ class Player extends Component {
     }
 
     update() {
-        super.update();
+        var ctx = myGameArea.context;
+
+        ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
 
         // Right-arrow
         if (globalContext.isPressed(39)) { this.x += 10; }
