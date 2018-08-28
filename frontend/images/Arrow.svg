@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="98px" height="99px" viewBox="0 0 98 99" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <title>Arrow</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Artboard-1" fill="#1D1D1B">
+            <g id="Arrow">
+                <polygon id="Fill-1" points="6.6604 93.6152 5.2364 92.2112 76.2334 20.2082 77.6574 21.6122"></polygon>
+                <polygon id="Fill-2" points="75.3596 12.4242 75.3976 12.8932 75.4186 21.0592 87.5986 8.7072 87.6096 0.0002"></polygon>
+                <path d="M97.5784,9.8295 L89.0204,10.1075 L76.8404,22.4605 C79.6314,22.0415 82.4954,21.9855 85.3644,22.2175 L97.5784,9.8295 Z" id="Fill-3"></path>
+                <polygon id="Fill-5" points="0.0002 98.9462 4.9082 87.0192 6.3942 92.4622 11.8552 93.8692"></polygon>
+            </g>
+        </g>
+    </g>
+</svg>

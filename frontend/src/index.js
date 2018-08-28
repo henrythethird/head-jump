@@ -2,24 +2,31 @@ const W3CWebSocket = require('websocket').w3cwebsocket;
 
 var renderComponents = []
 let webSocketClient
+var player = null;
 
 function startGame() {
   myGameArea.start();
 
   globalContext = new GlobalContext();
-  renderComponents.push(new Player());
+  player = new Player();
 }
 
 function updateGameArea() {
   myGameArea.clear();
 
-  if(Math.random() > 0.999) {
+  if(Math.random() > 0.998) {
     renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
+  }
+  
+  if(Math.random() > 0.998) {
+    renderComponents.push(new Cloud(50, 50, "blue", 0, myGameArea.canvas.height));
   }
   //console.log(renderComponents)
   renderComponents.forEach((comp) => {
     comp.update();
   })
+
+  player.update();
 }
 
 class Component {
@@ -50,7 +57,8 @@ class Player extends Component {
   constructor() {
     super(165, 210, "yellow", 0, 0);
 
-    this.health = 100;
+    this.weight = 50;
+    this.progress = 0;
     this.whaleImg = new Image;
     this.whaleImg.src = '/images/whale.svg';
 
@@ -58,13 +66,15 @@ class Player extends Component {
 
     this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
     this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
-      const width = (myGameArea.canvas.width - 210) * that.health / 100.0;
-      comp.width = width > 0 ? width : 0;
+      const percentage = that.weight / 100.0;
+      comp.width = (myGameArea.canvas.width - 210) * percentage
     })
   }
 
   update() {
     var ctx = myGameArea.context;
+  
+    this.collide();
 
     // Right-arrow
     if (globalContext.isPressed(39)) { this.x += 10; }
@@ -79,6 +89,35 @@ class Player extends Component {
 
     this.healthOuter.update();
     this.healthInner.update();
+
+    this.updateProgress();
+  }
+
+  updateProgress() {
+    this.progress += this.weight / 5000.0;
+
+    // Send progress to peers
+  }
+
+  collide() {
+    const c1 = this;
+    const res = renderComponents.filter((other) => this.intersectRect(c1, other))
+    
+    res.forEach((fish) => {
+      fish.disabled = true;
+      c1.weight += 2;
+    })
+  }
+
+  intersectRect(c1, c2) {
+    if (c2.disabled) {
+      return;
+    }
+
+    return !(c2.x > (c1.x + c1.width) || 
+            (c2.x + c2.width) < c1.x || 
+             c2.y > (c1.y + c1.height) ||
+            (c2.y + c2.height) < c1.y);
   }
 }
 
@@ -88,12 +127,31 @@ class Fish extends Component {
     this.fishImg = new Image;
     this.fishImg.src = '/images/Fish.svg';
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
+    this.disabled = false;
+  }
+  update() {
+    if (this.disabled) {
+      return;
+    }
+
+    var ctx = myGameArea.context;
+    this.y -= 1
+    ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
+  }
+}
+
+class Cloud extends Component {
+  constructor(x) {
+    super(841, 595, "blue", x, myGameArea.canvas.height)
+    this.cloudImg = new Image;
+    this.cloudImg.src = '/images/cloud1.svg';
+    this.x = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
 
   }
   update() {
     var ctx = myGameArea.context;
     this.y -= 1
-    ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
+    ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
 
