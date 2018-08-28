@@ -10,20 +10,46 @@ function startGame() {
   myGameArea.start();
 
   globalContext = new GlobalContext();
-  player = new Player();
-
-  renderComponents.push(player);
 }
 
 function updateGameArea() {
   myGameArea.clear();
 
-  if(Math.random() > 0.95) {
-    renderComponents.push(new Fish());
-  }
-  
-  if(Math.random() > 0.95) {
+  if (Math.random() > 0.93) {
     renderComponents.push(new Cloud());
+  }
+
+  if (globalContext.state == 'running') {
+    if(Math.random() > 0.95) {
+      renderComponents.push(new Fish());
+    }
+
+    if (globalContext.isPressed(27)) {
+      globalContext.state = 'initial';
+      renderComponents = [];
+      player = null;
+    }
+  }
+
+  if (globalContext.state == 'initial') {
+    globalContext.state = 'title';
+
+    renderComponents.push(new Title());
+  }
+
+  if (globalContext.state == 'title') {
+    if (globalContext.isPressed(13)) {
+      globalContext.state = 'starting';
+    }
+  }
+
+  if (globalContext.state == 'starting') {
+    player = new Player();
+
+    renderComponents = [];
+    renderComponents.push(player);
+
+    globalContext.state = 'running';
   }
   
   //console.log(renderComponents)
@@ -62,7 +88,7 @@ class Component {
 
 class Player extends Component {
   constructor() {
-    super(165, 210, "yellow", 350, 0, 10);
+    super(165, 210, "transparent", 350, 0, 10);
 
     this.weight = 50;
     this.progress = 0;
@@ -71,12 +97,6 @@ class Player extends Component {
     this.whaleImg.src = '/images/Whale.svg';
 
     var that = this;
-
-    this.progressOuter = new Component(30, myGameArea.canvas.height - 200, "black", myGameArea.canvas.width - 50, 100, 100)
-    this.progressInner = new Component(20, myGameArea.canvas.height - 210, "green", myGameArea.canvas.width - 45, 105, 101, function(ctx, comp) {
-      const percentage = that.progress / 100.0;
-      comp.height = (myGameArea.canvas.height - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
-    })
   }
 
   update() {
@@ -142,9 +162,6 @@ class Player extends Component {
 
     ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
 
-    this.progressOuter.update();
-    this.progressInner.update();
-
     this.updateProgress();
   }
 
@@ -166,6 +183,9 @@ class Player extends Component {
     res.forEach((fish) => {
       fish.disabled = true;
       c1.weight += 2;
+
+      var snd = new Audio("/sound/crunch.mpeg");
+      snd.play();
     })
   }
 
@@ -178,6 +198,12 @@ class Player extends Component {
             (c2.x + c2.width) < c1.x || 
              c2.y > (c1.y + c1.height) ||
             (c2.y + c2.height) < c1.y);
+  }
+}
+
+class Title extends Component {
+  constructor() {
+    super(100, 100, "black", 10, 10, 10);
   }
 }
 
@@ -198,7 +224,7 @@ class Fish extends Component {
     }
 
     var ctx = myGameArea.context;
-    this.y -= this.velocity
+    this.y -= this.velocity * (1 + player.progress / 10)
     ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
   }
 }
@@ -227,7 +253,7 @@ class Cloud extends Component {
   }
   update() {
     var ctx = myGameArea.context;
-    this.y -= this.speed
+    this.y -= this.speed * (1 + (player ? player.progress : 0) / 10)
     ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
@@ -250,9 +276,10 @@ var myGameArea = {
 class GlobalContext {
   constructor() {
     var that = this
-    window.addEventListener("keyup", function(e) { that.keyup(e) });
-    window.addEventListener("keydown", function(e) { that.keydown(e) });
+    window.addEventListener("keyup", function(e) { that.keyup(e); });
+    window.addEventListener("keydown", function(e) { that.keydown(e); });
     this.map = {};
+    this.state = "initial";
   }
 
   keyup(e) {
@@ -313,6 +340,7 @@ function startSocket() {
 let request = new Request(playerId)
 
 function sendProgress() {
+  if (!player) { return; }
   request.setProgress(player.progress)
 
   sendMessage(request.toJson());
