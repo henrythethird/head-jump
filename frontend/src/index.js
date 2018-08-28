@@ -13,10 +13,14 @@ function startGame() {
 function updateGameArea() {
   myGameArea.clear();
 
-  if (Math.random() > 0.99) {
+  if(Math.random() > 0.998) {
     renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
   }
-
+  
+  if(Math.random() > 0.998) {
+    renderComponents.push(new Cloud(50, 50, "blue", 0, myGameArea.canvas.height));
+  }
+  //console.log(renderComponents)
   renderComponents.forEach((comp) => {
     comp.update();
   })
@@ -91,7 +95,6 @@ class Player extends Component {
   updateProgress() {
     this.progress += this.weight / 5000.0;
 
-    console.log(this.progress)
     // Send progress to peers
   }
 
@@ -133,6 +136,21 @@ class Fish extends Component {
     var ctx = myGameArea.context;
     this.y -= 1
     ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
+  }
+}
+
+class Cloud extends Component {
+  constructor(x) {
+    super(841, 595, "blue", x, myGameArea.canvas.height)
+    this.cloudImg = new Image;
+    this.cloudImg.src = '/images/cloud1.svg';
+    this.x = Math.floor(Math.random() * (100 - 0 + 1)) + 0;
+
+  }
+  update() {
+    var ctx = myGameArea.context;
+    this.y -= 1
+    ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
 
