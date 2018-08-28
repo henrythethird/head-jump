@@ -5,13 +5,15 @@ function startGame() {
 
     globalContext = new GlobalContext();
     renderComponents.push(new Player());
-    renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
     renderComponents.push(new Component(myGameArea.canvas.width, 100, "black", 0, myGameArea.canvas.height - 100));
 }
 
 function updateGameArea() {
     myGameArea.clear();
-    
+
+    if(Math.random() > 0.999) {
+        renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
+    }
     //console.log(renderComponents)
     renderComponents.forEach((comp) => {
         comp.update();
@@ -84,11 +86,12 @@ class Fish extends Component {
         this.fishImg = new Image;
         this.fishImg.src = '/images/Fish.svg';
         this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
+
     }
     update() {
         var ctx = myGameArea.context;
         this.y -= 1
-        ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
+        ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)   
     }
 }
 
