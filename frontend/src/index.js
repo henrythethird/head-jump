@@ -10,32 +10,37 @@ function startGame() {
 
   globalContext = new GlobalContext();
   player = new Player();
+
+  renderComponents.push(player);
 }
 
 function updateGameArea() {
   myGameArea.clear();
 
-  if(Math.random() > 0.99) {
+  if(Math.random() > 0.95) {
     renderComponents.push(new Fish());
   }
   
-  if(Math.random() > 0.99) {
+  if(Math.random() > 0.95) {
     renderComponents.push(new Cloud());
   }
+  
   //console.log(renderComponents)
-  renderComponents.forEach((comp) => {
-    comp.update();
-  })
+  renderComponents.sort((a, b) => a.z - b.z);
 
-  player.update();
+  renderComponents
+    .forEach((comp) => {
+      comp.update();
+    })
 }
 
 class Component {
-  constructor(width, height, color, x, y, updateCallback) {
+  constructor(width, height, color, x, y, z, updateCallback) {
     this.width = width;
     this.height = height;
     this.x = x;
     this.y = y;
+    this.z = z
     var ctx = myGameArea.context;
     this.color = color;
     this.updateCallback = updateCallback;
@@ -56,24 +61,18 @@ class Component {
 
 class Player extends Component {
   constructor() {
-    super(165, 210, "yellow", 0, 0);
+    super(165, 210, "yellow", 350, 0, 10);
 
     this.weight = 50;
     this.progress = 0;
+    this.speed = { x: 0, y: 0 };
     this.whaleImg = new Image;
     this.whaleImg.src = '/images/Whale.svg';
 
     var that = this;
 
-    this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
-    this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
-      const percentage = that.weight / 100.0;
-
-      comp.width = (myGameArea.canvas.width - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
-    })
-
-    this.progressOuter = new Component(30, myGameArea.canvas.height - 200, "black", myGameArea.canvas.width - 50, 100)
-    this.progressInner = new Component(20, myGameArea.canvas.height - 210, "green", myGameArea.canvas.width - 45, 105, function(ctx, comp) {
+    this.progressOuter = new Component(30, myGameArea.canvas.height - 200, "black", myGameArea.canvas.width - 50, 100, 100)
+    this.progressInner = new Component(20, myGameArea.canvas.height - 210, "green", myGameArea.canvas.width - 45, 105, 101, function(ctx, comp) {
       const percentage = that.progress / 100.0;
       comp.height = (myGameArea.canvas.height - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
     })
@@ -84,19 +83,64 @@ class Player extends Component {
   
     this.collide();
 
+    var anyPressed = false;
+
     // Right-arrow
-    if (globalContext.isPressed(39)) { this.x += 10; }
+    if (globalContext.isPressed(39)) { 
+      anyPressed = true;
+      this.speed.x += .2;
+    }
     // Left-arrow
-    if (globalContext.isPressed(37)) { this.x -= 10; }
+    if (globalContext.isPressed(37)) { 
+      anyPressed = true;
+      this.speed.x -= .2; 
+    }
 
     // Down-arrow
-    if (globalContext.isPressed(38)) { this.y -= 10; }
+    if (globalContext.isPressed(38)) { 
+      anyPressed = true;
+      this.speed.y -= .2; 
+    }
     // Up-arrow
-    if (globalContext.isPressed(40)) { this.y += 10; }
+    if (globalContext.isPressed(40)) { 
+      anyPressed = true;
+      this.speed.y += .2; 
+    }
+
+    if (!anyPressed) {
+      this.speed.x *= 0.95;
+      this.speed.y *= 0.95;
+    }
+
+    if (this.speed.x > 0) {
+      if ((this.x + this.width) > myGameArea.canvas.width) { this.speed.x = 0; }
+      if ((this.x + this.width) > (myGameArea.canvas.width - 10)) { this.speed.x *= 0.1; }
+      if ((this.x + this.width) > (myGameArea.canvas.width - 100)) { this.speed.x *= 0.9; }
+    }
+
+    if (this.speed.x < 0) {
+      if (this.x <= 0) { this.speed.x = 0; }
+      if (this.x < 10) { this.speed.x *= 0.1; }
+      if (this.x < 100) { this.speed.x *= 0.9; }
+    }
+
+    if (this.speed.y > 0) {
+      if ((this.y + this.height) > myGameArea.canvas.height) { this.speed.y = 0; }
+      if ((this.y + this.height) > (myGameArea.canvas.height - 10)) { this.speed.y *= 0.1; }
+      if ((this.y + this.height) > (myGameArea.canvas.height - 100)) { this.speed.y *= 0.9; }
+    }
+
+    if (this.speed.y < 0) {
+      if (this.y <= 0) { this.speed.y = 0; }
+      if (this.y < 10) { this.speed.y *= 0.1; }
+      if (this.y < 100) { this.speed.y *= 0.9; }
+    }
+
+    this.x += this.speed.x;
+    this.y += this.speed.y;
+
     ctx.drawImage(this.whaleImg, this.x, this.y, this.width, this.height)
 
-    this.healthOuter.update();
-    this.healthInner.update();
     this.progressOuter.update();
     this.progressInner.update();
 
@@ -105,6 +149,9 @@ class Player extends Component {
 
   updateProgress() {
     this.progress += this.weight / 5000.0;
+    if (this.progress > 100) {
+      this.progress = 100;
+    }
 
     // Send progress to peers
   }
@@ -135,11 +182,13 @@ class Player extends Component {
 
 class Fish extends Component {
   constructor() {
-    super(36, 70, "blue", 0, myGameArea.canvas.height)
+    const width = Math.random() * 20 + 20;
+    super(width, width / 36 * 70, "blue", 0, myGameArea.canvas.height, 10);
     this.fishImg = new Image;
     this.fishImg.src = '/images/Fish.svg';
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0;
     this.disabled = false;
+    this.velocity = Math.random() * 5 + 3;
   }
 
   update() {
@@ -148,14 +197,14 @@ class Fish extends Component {
     }
 
     var ctx = myGameArea.context;
-    this.y -= 1
+    this.y -= this.velocity
     ctx.drawImage(this.fishImg, this.x, this.y, this.width, this.height)
   }
 }
 
 class Cloud extends Component {
   constructor() {
-    super(153, 84, "blue", 0, myGameArea.canvas.height)
+    super(153, 84, "blue", 0, myGameArea.canvas.height, 20)
     this.cloudImg = new Image
     var sizes = ['small', 'big']
     var size;
@@ -164,12 +213,13 @@ class Cloud extends Component {
     random = Math.floor(Math.random() * 4) + 1
     this.cloudImg.src = '/images/cloud' + random + '.svg'
     this.x = Math.floor(Math.random() * (600 - 0 + 1)) + 0
-    this.speed = 4
+    this.speed = 6;
 
     if(size == 'small') {
-      this.width = 76
-      this.height = 42
-      this.speed = 0.7
+      this.width = 76;
+      this.height = 42;
+      this.speed = 2;
+      this.z = 5;
     }
 
   }
