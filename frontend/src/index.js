@@ -13,11 +13,11 @@ function startGame() {
 function updateGameArea() {
   myGameArea.clear();
 
-  if(Math.random() > 0.998) {
+  if(Math.random() > 0.99) {
     renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
   }
   
-  if(Math.random() > 0.998) {
+  if(Math.random() > 0.99) {
     renderComponents.push(new Cloud(50, 50, "blue", 0, myGameArea.canvas.height));
   }
   //console.log(renderComponents)
@@ -59,14 +59,21 @@ class Player extends Component {
     this.weight = 50;
     this.progress = 0;
     this.whaleImg = new Image;
-    this.whaleImg.src = '/images/whale.svg';
+    this.whaleImg.src = '/images/Whale.svg';
 
     var that = this;
 
     this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
     this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
       const percentage = that.weight / 100.0;
-      comp.width = (myGameArea.canvas.width - 210) * percentage
+
+      comp.width = (myGameArea.canvas.width - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
+    })
+
+    this.progressOuter = new Component(30, myGameArea.canvas.height - 200, "black", myGameArea.canvas.width - 50, 100)
+    this.progressInner = new Component(20, myGameArea.canvas.height - 210, "green", myGameArea.canvas.width - 45, 105, function(ctx, comp) {
+      const percentage = that.progress / 100.0;
+      comp.height = (myGameArea.canvas.height - 210) * (percentage > 100 ? 100 : (percentage < 0 ? 0 : percentage))
     })
   }
 
@@ -88,6 +95,8 @@ class Player extends Component {
 
     this.healthOuter.update();
     this.healthInner.update();
+    this.progressOuter.update();
+    this.progressInner.update();
 
     this.updateProgress();
   }
@@ -152,7 +161,7 @@ class Cloud extends Component {
   }
   update() {
     var ctx = myGameArea.context;
-    this.y -= 1
+    this.y -= 2.5
     ctx.drawImage(this.cloudImg, this.x, this.y, this.width, this.height)
   }
 }
