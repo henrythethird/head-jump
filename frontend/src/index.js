@@ -1,12 +1,13 @@
 const W3CWebSocket = require('websocket').w3cwebsocket;
 
 var renderComponents = []
+var player = null;
 
 function startGame() {
   myGameArea.start();
 
   globalContext = new GlobalContext();
-  renderComponents.push(new Player());
+  player = new Player();
 }
 
 function updateGameArea() {
@@ -15,10 +16,12 @@ function updateGameArea() {
   if(Math.random() > 0.999) {
     renderComponents.push(new Fish(50, 50, "blue", 0, myGameArea.canvas.height));
   }
-  //console.log(renderComponents)
+
   renderComponents.forEach((comp) => {
     comp.update();
   })
+
+  player.update();
 }
 
 class Component {
@@ -49,7 +52,8 @@ class Player extends Component {
   constructor() {
     super(165, 210, "yellow", 0, 0);
 
-    this.health = 100;
+    this.weight = 50;
+    this.progress = 0;
     this.whaleImg = new Image;
     this.whaleImg.src = '/images/whale.svg';
 
@@ -57,8 +61,8 @@ class Player extends Component {
 
     this.healthOuter = new Component(myGameArea.canvas.width - 200, 30, "black", 100, 30)
     this.healthInner = new Component(myGameArea.canvas.width - 210, 20, "red", 105, 35, function(ctx, comp) {
-      const width = (myGameArea.canvas.width - 210) * that.health / 100.0;
-      comp.width = width > 0 ? width : 0;
+      const percentage = that.weight / 100.0;
+      comp.width = (myGameArea.canvas.width - 210) * percentage
     })
   }
 
@@ -78,6 +82,19 @@ class Player extends Component {
 
     this.healthOuter.update();
     this.healthInner.update();
+
+    this.updateProgress();
+  }
+
+  updateProgress() {
+    this.progress += this.weight / 1000.0;
+
+    console.log(this.progress)
+    // Send progress to peers
+  }
+
+  collide() {
+    
   }
 }
 
