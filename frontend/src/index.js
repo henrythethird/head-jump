@@ -1,7 +1,9 @@
 const W3CWebSocket = require('websocket').w3cwebsocket;
 
 var renderComponents = []
+let webSocketClient
 var player = null;
+const userId = Math.floor((Math.random() * 10000) + 1)
 
 function startGame() {
   myGameArea.start();
@@ -202,35 +204,63 @@ class GlobalContext {
   }
 }
 
-function startSocket() {
-  const client = new W3CWebSocket('ws://localhost:8080/', 'echo-protocol')
+class Request {
+  constructor(userId) {
+    this.userId = userId
+  }
 
-  client.onerror = function() {
+  setProgress(progress) {
+    this.progress = progress
+  }
+
+  toJson() {
+    return JSON.stringify(this)
+  }
+}
+
+function startSocket() {
+  webSocketClient = new W3CWebSocket('ws://localhost:8080/', 'echo-protocol')
+
+  webSocketClient.onerror = function() {
     console.log('Connection Error')
   }
 
-  client.onopen = function() {
+  webSocketClient.onopen = function() {
     console.log('WebSocket Client Connected')
 
-    function sendNumber() {
-      if (client.readyState === client.OPEN) {
-        const number = Math.round(Math.random() * 0xFFFFFF)
-        client.send(number.toString())
-        setTimeout(sendNumber, 1000)
-      }
-    }
-    sendNumber()
+    sendProgress()
   }
 
-  client.onclose = function() {
+  webSocketClient.onclose = function() {
     console.log('echo-protocol Client Closed')
   }
 
-  client.onmessage = function(e) {
-    if (typeof e.data === 'string') {
-      console.log("Received: '" + e.data + "'")
+  webSocketClient.onmessage = function(e) {
+    if (typeof e.data !== 'string') {
+      console.log('Received data is no string')
+      return
     }
+
+    console.log("Received: '" + e.data + "'")
   }
+}
+
+let request = new Request(userId)
+
+function sendProgress() {
+  request.setProgress(player.progress)
+
+  sendMessage(request.toJson());
+  setTimeout(sendProgress, 1000);
+}
+
+function sendMessage(message) {
+  if (webSocketClient.readyState !== webSocketClient.OPEN) {
+    console.log('Can not send message as client has not connected yet')
+    return
+  }
+
+  webSocketClient.send(message)
 }
 
 startGame()
