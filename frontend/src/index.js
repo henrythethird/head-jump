@@ -3,6 +3,7 @@ const W3CWebSocket = require('websocket').w3cwebsocket;
 var renderComponents = []
 let webSocketClient
 var player = null;
+const userId = Math.floor((Math.random() * 10000) + 1)
 
 function startGame() {
   myGameArea.start();
@@ -192,11 +193,15 @@ class GlobalContext {
 }
 
 class Request {
-  constructor() {
-    this.userId = Math.floor((Math.random() * 10000) + 1)
+  constructor(userId) {
+    this.userId = userId
   }
 
-  toString() {
+  setProgress(progress) {
+    this.progress = progress
+  }
+
+  toJson() {
     return JSON.stringify(this)
   }
 }
@@ -211,7 +216,7 @@ function startSocket() {
   webSocketClient.onopen = function() {
     console.log('WebSocket Client Connected')
 
-    sendMessage(request.toString())
+    sendProgress()
   }
 
   webSocketClient.onclose = function() {
@@ -228,7 +233,14 @@ function startSocket() {
   }
 }
 
-let request = new Request()
+let request = new Request(userId)
+
+function sendProgress() {
+  request.setProgress(player.progress)
+
+  sendMessage(request.toJson());
+  setTimeout(sendProgress, 1000);
+}
 
 function sendMessage(message) {
   if (webSocketClient.readyState !== webSocketClient.OPEN) {
